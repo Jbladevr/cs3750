@@ -28,33 +28,35 @@ public class Sender {
 	
 	public static void main(String[] args) throws Exception{
 		String KXY = readKXYFromFile("symmetric.key");
-	    PrivateKey KPrivate = readPrivKeyFromFile("XPrivate.key");
+	    PrivateKey KXPrivate = readPrivKeyFromFile("XPrivate.key");
 	    Scanner in = new Scanner(System.in);
 	    System.out.print("Input the name of the message file: ");
 	    String msg = in.next();
-	    byte[] t = toByteArr(msg);
+	    byte[] msgAsByte = toByteArr(msg);
 	    in.close();
 	    byte[] hash = md(msg).getBytes();
 	    System.out.println("digit digest (hash value):");
 	    toHexa(hash);
-    	saveToFileSHA256("message.dd", hash);
-    	Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-    	byte[] input = md(msg).getBytes(); 
-    	SecureRandom random = new SecureRandom();
-    	cipher.init(Cipher.ENCRYPT_MODE, KPrivate, random);
-    	byte[] cipherText = cipher.doFinal(input);
+    	saveToFile("message.dd", hash);
+    	byte[] cipherText = encryptRSA(KXPrivate,hash);
     	System.out.println("CipherText:");
 	    toHexa(cipherText);
     	System.out.println("");
-    	saveToFileRSA("message.dd-msg",cipherText);
-    	append("message.dd-msg",t);
+    	saveToFile("message.dd-msg",cipherText);
+    	append("message.dd-msg",msgAsByte);
       byte[] IV = randomIV();
-      //encrypt(KXY,IV,????);
-
-    	//////////////////////////////////
-    	//AES encryption of message.dd-msg
-    	//////////////////////////////////
+      byte[] digSigAndMsg = toByteArr("message.dd-msg");
+      byte[] aesCipher = encryptAES(KXY,IV,digSigAndMsg);
+      saveToFile("message.aescipher",IV);
+      append("message.aescipher",aesCipher);
 	}
+   
+   public static byte[] encryptRSA(PrivateKey KXPrivate, byte[] hash) throws Exception {
+      Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+      SecureRandom random = new SecureRandom();
+    	cipher.init(Cipher.ENCRYPT_MODE, KXPrivate, random);
+    	return cipher.doFinal(hash);
+   }
  
 	public static byte[] randomIV(){
       SecureRandom random = new SecureRandom();
@@ -63,12 +65,12 @@ public class Sender {
       return bytes;
    }
    
-   public static byte[] encrypt(String symmetricKey, byte[] IV, String digSigAndMsg) throws Exception {
-    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
-    SecretKeySpec key = new SecretKeySpec(symmetricKey.getBytes("UTF-8"), "AES");
-    cipher.init(Cipher.ENCRYPT_MODE, key,new IvParameterSpec(IV));
-    return cipher.doFinal(digSigAndMsg.getBytes("UTF-8"));
-  }
+   public static byte[] encryptAES(String symmetricKey, byte[] IV, byte[] digSigAndMsg) throws Exception {
+      Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
+      SecretKeySpec key = new SecretKeySpec(symmetricKey.getBytes("UTF-8"), "AES");
+      cipher.init(Cipher.ENCRYPT_MODE, key,new IvParameterSpec(IV));
+      return cipher.doFinal(digSigAndMsg);
+   }
    
 	public static void toHexa(byte [] in) {
 		for (int k=0, j=0; k<in.length; k++, j++) {
@@ -82,25 +84,25 @@ public class Sender {
 	
 	public static byte[] toByteArr(String file) throws Exception {
 		FileInputStream fileInputStream = null;
-	    byte[] ba = null;
-	    try {
-	    	File f = new File(file);
-	        ba = new byte[(int) f.length()];
-	        //read file into bytes[]
-	        fileInputStream = new FileInputStream(f);
-	        fileInputStream.read(ba);
-	    } catch (IOException e) {
+	   byte[] ba = null;
+	   try {
+	      File f = new File(file);
+	      ba = new byte[(int) f.length()];
+	      //read file into bytes[]
+	      fileInputStream = new FileInputStream(f);
+	      fileInputStream.read(ba);
+	   } catch (IOException e) {
 	    	e.printStackTrace();
-	    } finally {
+	   } finally {
 	    	if (fileInputStream != null) {
-	        try {
-	        	fileInputStream.close();
-	        } catch (IOException e) {
+	      try {
+	         fileInputStream.close();
+	      } catch (IOException e) {
 	        	e.printStackTrace();
-	            }
-	        }
-	    }
-	    return ba;
+	      }
+	      }
+	   }
+	   return ba;
 	}
 	
 	public static void append(String fileName, byte[] data) throws Exception {
@@ -121,17 +123,7 @@ public class Sender {
 		}
 	}
 	
-	public static void saveToFileRSA(String fileName, byte [] arr) throws Exception {
-		System.out.println("Write to " + fileName + "\n");
-		FileOutputStream fos = new FileOutputStream(fileName);
-		try {
-			fos.write(arr);
-		}
-		finally {
-			fos.close();
-		}
-	}
-   public static void saveToFileSHA256(String fileName, byte [] arr) throws Exception {
+	public static void saveToFile(String fileName, byte [] arr) throws Exception {
 		System.out.println("Write to " + fileName + "\n");
 		FileOutputStream fos = new FileOutputStream(fileName);
 		try {
@@ -143,20 +135,20 @@ public class Sender {
 	}
    
 	public static String md(String f) throws Exception {
-	    BufferedInputStream file = new BufferedInputStream(new FileInputStream(f));
-	    MessageDigest md = MessageDigest.getInstance("SHA-256");
-	    DigestInputStream in = new DigestInputStream(file, md);
-       int BUFFER_SIZE = 32 * 1024;
-	    int i;
-	    byte[] buffer = new byte[BUFFER_SIZE];
-	    do {
-	    	i = in.read(buffer, 0, BUFFER_SIZE);
-	    } while (i == BUFFER_SIZE);
-	    md = in.getMessageDigest();
-	    in.close();
-	    byte[] hash = md.digest();
-	    System.out.println("");    
-	    return new String(hash);
+	   BufferedInputStream file = new BufferedInputStream(new FileInputStream(f));
+	   MessageDigest md = MessageDigest.getInstance("SHA-256");
+	   DigestInputStream in = new DigestInputStream(file, md);
+      int BUFFER_SIZE = 32 * 1024;
+	   int i;
+	   byte[] buffer = new byte[BUFFER_SIZE];
+	   do {
+	      i = in.read(buffer, 0, BUFFER_SIZE);
+	   } while (i == BUFFER_SIZE);
+	   md = in.getMessageDigest();
+	   in.close();
+	   byte[] hash = md.digest();
+	   System.out.println("");    
+	   return new String(hash);
 	}
 	
 	//needs to be changed from string to and OBJECT?
