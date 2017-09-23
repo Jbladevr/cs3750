@@ -10,9 +10,19 @@ import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Scanner;
 import javax.crypto.Cipher;
+import java.security.MessageDigest;
+import java.util.Arrays;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+import javax.crypto.spec.IvParameterSpec;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class Sender {
-	private static int BUFFER_SIZE = 32 * 1024;
+
 	public Sender() {
 	}
 	
@@ -38,11 +48,28 @@ public class Sender {
     	System.out.println("");
     	saveToFileRSA("message.dd-msg",cipherText);
     	append("message.dd-msg",t);
+      byte[] IV = randomIV();
+      //encrypt(KXY,IV,????);
+
     	//////////////////////////////////
     	//AES encryption of message.dd-msg
     	//////////////////////////////////
 	}
-	
+ 
+	public static byte[] randomIV(){
+      SecureRandom random = new SecureRandom();
+      byte[] bytes = new byte[16];
+      random.nextBytes(bytes);
+      return bytes;
+   }
+   
+   public static byte[] encrypt(String symmetricKey, byte[] IV, String digSigAndMsg) throws Exception {
+    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
+    SecretKeySpec key = new SecretKeySpec(symmetricKey.getBytes("UTF-8"), "AES");
+    cipher.init(Cipher.ENCRYPT_MODE, key,new IvParameterSpec(IV));
+    return cipher.doFinal(digSigAndMsg.getBytes("UTF-8"));
+  }
+   
 	public static void toHexa(byte [] in) {
 		for (int k=0, j=0; k<in.length; k++, j++) {
 			System.out.format("%2X ", new Byte(in[k])) ;
@@ -119,6 +146,7 @@ public class Sender {
 	    BufferedInputStream file = new BufferedInputStream(new FileInputStream(f));
 	    MessageDigest md = MessageDigest.getInstance("SHA-256");
 	    DigestInputStream in = new DigestInputStream(file, md);
+       int BUFFER_SIZE = 32 * 1024;
 	    int i;
 	    byte[] buffer = new byte[BUFFER_SIZE];
 	    do {
