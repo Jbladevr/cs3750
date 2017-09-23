@@ -25,11 +25,19 @@ public class KeyGen
 	    	Key kYprivate = pairY.getPrivate();
 
          //User input for 16 char symmetric key (work in progress, basic version)
-		   Scanner input = new Scanner(System.in);
-	    	System.out.print("Enter 16 char:");
-	    	String kXY = input.next();
-	    	input.close();
-	   
+		    Scanner input = new Scanner(System.in);
+
+            int counter = 0;
+            String kXY = "";
+            System.out.print("Enter 16 characters: " );
+
+            while(kXY.length() < 16 || kXY.length() > 16) {
+                
+	            kXY = input.nextLine();
+	            if(kXY.length() < 16 || kXY.length() > 16 ) System.out.println("You must input 16 characters for the Key");
+            }
+
+            input.close();
 	    	//get the parameters of the keys: modulus and exponet
 	    	KeyFactory factory = KeyFactory.getInstance("RSA");
 	    	RSAPublicKeySpec pubKXSpec = factory.getKeySpec(kXpublic, 
