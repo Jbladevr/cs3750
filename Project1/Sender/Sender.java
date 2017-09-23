@@ -27,7 +27,7 @@ public class Sender {
 	    byte[] hash = md(msg).getBytes();
 	    System.out.println("digit digest (hash value):");
 	    toHexa(hash);
-    	saveToFileSHA256("message.dd", md(msg));
+    	saveToFileSHA256("message.dd", hash);
     	Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
     	byte[] input = md(msg).getBytes(); 
     	SecureRandom random = new SecureRandom();
@@ -104,20 +104,17 @@ public class Sender {
 			fos.close();
 		}
 	}
-	
-	public static void saveToFileSHA256(String fileName, String code) throws IOException {
+   public static void saveToFileSHA256(String fileName, byte [] arr) throws Exception {
 		System.out.println("Write to " + fileName + "\n");
-		ObjectOutputStream oout = new ObjectOutputStream(
-			new BufferedOutputStream(new FileOutputStream(fileName)));
+		FileOutputStream fos = new FileOutputStream(fileName);
 		try {
-			oout.writeObject(code);
-		} catch (Exception e) {
-		      	throw new IOException("Unexpected error", e);
-		} finally {
-			oout.close();
+			fos.write(arr);
+		}
+		finally {
+			fos.close();
 		}
 	}
-
+   
 	public static String md(String f) throws Exception {
 	    BufferedInputStream file = new BufferedInputStream(new FileInputStream(f));
 	    MessageDigest md = MessageDigest.getInstance("SHA-256");
