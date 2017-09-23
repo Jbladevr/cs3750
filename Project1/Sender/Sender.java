@@ -1,20 +1,15 @@
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.math.BigInteger;
 import java.security.DigestInputStream;
 import java.security.KeyFactory;
 import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Scanner;
+import javax.crypto.Cipher;
 
 public class Sender {
 	private static int BUFFER_SIZE = 32 * 1024;
@@ -24,18 +19,94 @@ public class Sender {
 	public static void main(String[] args) throws Exception{
 		String KXY = readKXYFromFile("symmetric.key");
 	    PrivateKey KPrivate = readPrivKeyFromFile("XPrivate.key");
-	    Scanner input = new Scanner(System.in);
+	    Scanner in = new Scanner(System.in);
 	    System.out.print("Input the name of the message file: ");
-	    String msg = input.next(); //can be NOT a text message does the string work in that case ?
-    	input.close();
-    	saveToFileSHA256("message.dd", md(msg)); // need to change to only hexadecimal bytes
+	    String msg = in.next();
+	    byte[] t = toByteArr(msg);
+	    in.close();
+	    byte[] hash = md(msg).getBytes();
+	    System.out.println("digit digest (hash value):");
+	    toHexa(hash);
+    	saveToFileSHA256("message.dd", md(msg));
+    	Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+    	byte[] input = md(msg).getBytes(); 
+    	SecureRandom random = new SecureRandom();
+    	cipher.init(Cipher.ENCRYPT_MODE, KPrivate, random);
+    	byte[] cipherText = cipher.doFinal(input);
+    	System.out.println("CipherText:");
+	    toHexa(cipherText);
+    	System.out.println("");
+    	saveToFileRSA("message.dd-msg",cipherText);
+    	append("message.dd-msg",t);
+    	//////////////////////////////////
+    	//AES encryption of message.dd-msg
+    	//////////////////////////////////
 	}
-	public static void saveToFileSHA256(String fileName,String code) throws IOException {
-		    
-		//this output will prolly go away, its for debuging   
-		System.out.println("Write to " + fileName + ": hashCode = " + 
-			code.toString() + "\n");
-
+	
+	public static void toHexa(byte [] in) {
+		for (int k=0, j=0; k<in.length; k++, j++) {
+			System.out.format("%2X ", new Byte(in[k])) ;
+		    if (j >= 15) {
+		    	System.out.println("");
+		        j=-1;
+		    }
+		}
+	}
+	
+	public static byte[] toByteArr(String file) throws Exception {
+		FileInputStream fileInputStream = null;
+	    byte[] ba = null;
+	    try {
+	    	File f = new File(file);
+	        ba = new byte[(int) f.length()];
+	        //read file into bytes[]
+	        fileInputStream = new FileInputStream(f);
+	        fileInputStream.read(ba);
+	    } catch (IOException e) {
+	    	e.printStackTrace();
+	    } finally {
+	    	if (fileInputStream != null) {
+	        try {
+	        	fileInputStream.close();
+	        } catch (IOException e) {
+	        	e.printStackTrace();
+	            }
+	        }
+	    }
+	    return ba;
+	}
+	
+	public static void append(String fileName, byte[] data) throws Exception {
+		System.out.println("append to " + fileName + "\n");
+		OutputStream os = null;
+		try {
+			// below true flag tells OutputStream to append
+			os = new FileOutputStream(new File(fileName), true);
+			os.write(data, 0, data.length);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				os.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static void saveToFileRSA(String fileName, byte [] arr) throws Exception {
+		System.out.println("Write to " + fileName + "\n");
+		FileOutputStream fos = new FileOutputStream(fileName);
+		try {
+			fos.write(arr);
+		}
+		finally {
+			fos.close();
+		}
+	}
+	
+	public static void saveToFileSHA256(String fileName, String code) throws IOException {
+		System.out.println("Write to " + fileName + "\n");
 		ObjectOutputStream oout = new ObjectOutputStream(
 			new BufferedOutputStream(new FileOutputStream(fileName)));
 		try {
@@ -54,76 +125,55 @@ public class Sender {
 	    int i;
 	    byte[] buffer = new byte[BUFFER_SIZE];
 	    do {
-	      i = in.read(buffer, 0, BUFFER_SIZE);
+	    	i = in.read(buffer, 0, BUFFER_SIZE);
 	    } while (i == BUFFER_SIZE);
 	    md = in.getMessageDigest();
 	    in.close();
-
 	    byte[] hash = md.digest();
-
-	    System.out.println("digit digest (hash value):");
-	    for (int k=0, j=0; k<hash.length; k++, j++) {
-	      System.out.format("%2X ", new Byte(hash[k])) ;
-	      if (j >= 15) {
-	        System.out.println("");
-	        j=-1;
-	      }
-	    }
 	    System.out.println("");    
-
 	    return new String(hash);
-	  }
+	}
+	
 	//needs to be changed from string to and OBJECT?
 	public static String readKXYFromFile(String keyFileName) 
 		      throws IOException {
+		InputStream in = 
+				Sender.class.getResourceAsStream(keyFileName);
+		ObjectInputStream oin =
+				new ObjectInputStream(new BufferedInputStream(in));
+		try {
+			String m = (String) oin.readObject();
+			System.out.println("Read from " + keyFileName + ": msg= " + 
+					m.toString()  + "\n");
+		    String key = m.toString();
+		    return key;
+		} catch (Exception e) {
+			throw new RuntimeException("Spurious serialisation error", e);
+		} finally {
+		    oin.close();
+		}
+	}
 
-		    InputStream in = 
-		        Sender.class.getResourceAsStream(keyFileName);
-		    ObjectInputStream oin =
-		        new ObjectInputStream(new BufferedInputStream(in));
-
-		    try {
-		      String m = (String) oin.readObject();
-
-		      System.out.println("Read from " + keyFileName + ": msg= " + 
-		          m.toString()  + "\n");
-
-		      String key = m.toString();
-
-		      return key;
-		    } catch (Exception e) {
-		      throw new RuntimeException("Spurious serialisation error", e);
-		    } finally {
-		      oin.close();
-		    }
-		  }
-
-
-		  //read key parameters from a file and generate the private key 
-		  public static PrivateKey readPrivKeyFromFile(String keyFileName) 
-		      throws IOException {
-
-		    InputStream in = 
-		    		Sender.class.getResourceAsStream(keyFileName);
-		    ObjectInputStream oin =
-		        new ObjectInputStream(new BufferedInputStream(in));
-
-		    try {
-		      BigInteger m = (BigInteger) oin.readObject();
-		      BigInteger e = (BigInteger) oin.readObject();
-
-		      System.out.println("Read from " + keyFileName + ": modulus = " + 
-		          m.toString() + ", exponent = " + e.toString() + "\n");
-
-		      RSAPrivateKeySpec keySpec = new RSAPrivateKeySpec(m, e);
-		      KeyFactory factory = KeyFactory.getInstance("RSA");
-		      PrivateKey key = factory.generatePrivate(keySpec);
-
-		      return key;
-		    } catch (Exception e) {
-		      throw new RuntimeException("Spurious serialisation error", e);
-		    } finally {
-		      oin.close();
-		    }
-		  }
+	//read key parameters from a file and generate the private key 
+	public static PrivateKey readPrivKeyFromFile(String keyFileName) 
+			throws IOException {
+		InputStream in = 
+				Sender.class.getResourceAsStream(keyFileName);
+		ObjectInputStream oin =
+		   		new ObjectInputStream(new BufferedInputStream(in));
+		try {
+			BigInteger m = (BigInteger) oin.readObject();
+		    BigInteger e = (BigInteger) oin.readObject();
+		    System.out.println("Read from " + keyFileName + ": modulus = " + 
+		    		m.toString() + ", exponent = " + e.toString() + "\n");
+		    RSAPrivateKeySpec keySpec = new RSAPrivateKeySpec(m, e);
+		    KeyFactory factory = KeyFactory.getInstance("RSA");
+		    PrivateKey key = factory.generatePrivate(keySpec);
+		    return key;
+		} catch (Exception e) {
+			throw new RuntimeException("Spurious serialisation error", e);
+		} finally {
+		    oin.close();
+		}
+	}
 }
