@@ -16,10 +16,22 @@ import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
-
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
+/**
+ *  * 
+ *   * This Sender class requires the KeyGen class
+ *    * to generate the Symmetric Key, a Private Key and
+ *     * a Public Key.
+ *      *
+ *       * There is also a Receiver program to decrypt the
+ *        * ciphertext that this program creates.
+ *         *
+ *          * 2017 CS3750, w/ Dr. Weiying Zhu's contributed code
+ *           * Authors: Egor Muscat, Andrew Tovio Roberts
+ *            * */
 
 public class Sender {
 
@@ -27,23 +39,54 @@ public class Sender {
 	}
 	
 	public static void main(String[] args) throws Exception{
-		String KXY = readKXYFromFile("symmetric.key");
-	    PrivateKey KXPrivate = readPrivKeyFromFile("XPrivate.key");
-	    Scanner in = new Scanner(System.in);
-	    System.out.print("Input the name of the message file: ");
-	    String msg = in.next();
-	    byte[] msgAsByte = toByteArr(msg);
-	    in.close();
-	    byte[] hash = md(msg).getBytes();
-	    System.out.println("digit digest (hash value):");
-	    toHexa(hash);
-    	saveToFile("message.dd", hash);
-    	byte[] cipherText = encryptRSA(KXPrivate,hash);
-    	System.out.println("CipherText:");
-	    toHexa(cipherText);
-    	System.out.println("");
-    	saveToFile("message.dd-msg",cipherText);
-    	append("message.dd-msg",msgAsByte);
+	
+      
+      // The Files
+      //   symmetric.key
+      //   XPrivate.key
+      //   XPublic.key
+      // are produced by running
+      // the program in KeyGen/KeyGen
+      String KXY = readKXYFromFile("symmetric.key");
+	  PrivateKey KXPrivate = readPrivKeyFromFile("XPrivate.key");
+	  
+      // Get message file name from user System input
+      Scanner in = new Scanner(System.in);
+	  System.out.print("Input the name of the message file: ");
+	  String msg = in.next();
+
+	  // The filename of the plaintext is passed to toByteArr()
+      // and the corresponding file is read in and returned as
+      // a byte array.
+      byte[] msgAsByte = toByteArr(msg);
+	  in.close();
+	  
+      
+      // The filename of the plaintext is passed to md(), 
+      // which creates a hash digest of the message to be
+      // stored in namespace hash
+      byte[] hash = md(msg).getBytes();
+
+      // Output to the console the hash in hex
+	  System.out.println("digit digest (hash value):");
+	  toHexa(hash);
+    
+      // Save the hash to a digital digest file
+      saveToFile("message.dd", hash);
+
+      // Encrypt the hash with RSA using the Private Key 
+      byte[] cipheredHash = encryptRSA(KXPrivate,hash);
+    
+      // Output to console in bytes the CipherText of the Message Hash
+      System.out.println("Cipher Text of SHA256 Hash:");
+	  toHexa(cipheredHash);
+      System.out.println("");
+
+      // Save the ciphered hash then the unciphered message to file
+      saveToFile("message.dd-msg",cipheredHash);
+      append("message.dd-msg",msgAsByte);
+
+      
       byte[] IV = randomIV();
       byte[] digSigAndMsg = toByteArr("message.dd-msg");
       byte[] aesCipher = encryptAES(KXY,IV,digSigAndMsg);
