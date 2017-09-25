@@ -47,6 +47,8 @@ public class Sender {
       //   XPublic.key
       // are produced by running
       // the program in KeyGen/KeyGen
+		
+      // symmetric.key and XPrivate.key are read from files
       String KXY = readKXYFromFile("symmetric.key");
 	  PrivateKey KXPrivate = readPrivKeyFromFile("XPrivate.key");
 	  
@@ -56,18 +58,16 @@ public class Sender {
 	  String msg = in.next();
 
 	  // The filename of the plaintext is passed to toByteArr()
-      // and the corresponding file is read in and returned as
+      // and then read in and returned as
       // a byte array.
       byte[] msgAsByte = toByteArr(msg);
 	  in.close();
 	  
       
       // The filename of the plaintext is passed to md(), 
-      // which creates a hash digest of the message to be
-      // stored in namespace hash
-      //
-      //TODO:  modify the return of md() to be a byte[] instead of a String
-      byte[] hash = md(msg).getBytes();
+      // which creates a digital digest(hash) of the message 
+      // and stored in a byte array hash
+      byte[] hash = md(msg);
 
       // Output to the console the hash in hex
 	  System.out.println("digit digest (hash value):");
@@ -76,15 +76,16 @@ public class Sender {
       // Save the hash to a digital digest file
       saveToFile("message.dd", hash);
 
-      // Encrypt the hash with RSA using the Private Key 
+      // Encrypt the hash with RSA using the Private Key
+      // to produce digital signiture
       byte[] cipheredHash = encryptRSA(KXPrivate,hash);
     
-      // Output to console in bytes the CipherText of the Message Hash
-      System.out.println("Cipher Text of SHA256 Hash:");
+      // Output to console digital signiture in hex (SHA256 enc(hash) + RSA)
+      System.out.println("Cipher Text of Digital Signiture:");
 	  toHexa(cipheredHash);
       System.out.println("");
 
-      // Save the ciphered hash then the unciphered message to file
+      // Save the digital signiture then the original message to file
       saveToFile("message.dd-msg",cipheredHash);
       append("message.dd-msg",msgAsByte);
 
@@ -92,21 +93,21 @@ public class Sender {
       // and load it into a byte array
       byte[] IV = randomIV();
 
-      // The filename of the digital digest (ciphered hash +
-      // unciphered message) is read and loaded into a byte
+      // The filename of the digital signiture and the original message
+      // ((SHA256 + RSA) + original message) is read and loaded into a byte
       // array
       byte[] digSigAndMsg = toByteArr("message.dd-msg");
 
-      // The bytearray containing the digital digest is
-      // passed to AES encryption method, along with the 
-      // Symmetric key and the Initialization Vector, the
-      // result being loaded into a byte array.
+      // AES encryption with padding using the 
+      // Symmetric key and the Initialization Vector, together with the 
+      // digital signiture + original message.
+      // Result being loaded into a byte array.
       byte[] aesCipher = encryptAES(KXY,IV,digSigAndMsg);
 
       // First, the Initialization Vector is set to the top
       // of the encrypted file (It will be exposed to potential
       // attackers, which is the norm), then append the AES-encrypted 
-      // digital digest (contains RSA(SHA256(msg)) + message)
+      // (digital signiture + original message)
       saveToFile("message.aescipher",IV);
       append("message.aescipher",aesCipher);
 
@@ -241,9 +242,9 @@ public class Sender {
      * md() stands for message digest. It is provided by Dr. Weiying Zhu.
      * It takes a String representing a filename, opens that corresponding file
      * and creates a SHA256 hash from the contents of the file.  It returns the
-     * file's hash as a String.
+     * file's hash as a byte array.
      */
-	public static String md(String f) throws Exception {
+	public static byte[] md(String f) throws Exception {
 	   BufferedInputStream file = new BufferedInputStream(new FileInputStream(f));
 	   MessageDigest md = MessageDigest.getInstance("SHA-256");
 	   DigestInputStream in = new DigestInputStream(file, md);
@@ -257,9 +258,7 @@ public class Sender {
 	   in.close();
 	   byte[] hash = md.digest();
 	   System.out.println("");    
-	   
-       // TODO: change this return from String to byte[]
-       return new String(hash);
+	   return hash;
 	}
 	
 	/**
