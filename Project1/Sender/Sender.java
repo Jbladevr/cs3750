@@ -132,7 +132,7 @@ public class Sender {
     *  by byte into a byte array. The IV is later placed at
     *  the beginning of the finished ciphertext message.aescipher
     *  so that the Decrypt program will be able to use it.
-    */ .
+    */
 	public static byte[] randomIV(){
       SecureRandom random = new SecureRandom();
       byte[] bytes = new byte[16];
