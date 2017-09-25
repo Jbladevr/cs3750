@@ -86,12 +86,29 @@ public class Sender {
       saveToFile("message.dd-msg",cipheredHash);
       append("message.dd-msg",msgAsByte);
 
-      
+      // Create a random initialization vector
+      // and load it into a byte array
       byte[] IV = randomIV();
+
+      // The filename of the digital digest (ciphered hash +
+      // unciphered message) is read and loaded into a byte
+      // array
       byte[] digSigAndMsg = toByteArr("message.dd-msg");
+
+      // The bytearray containing the digital digest is
+      // passed to AES encryption method, along with the 
+      // Symmetric key and the Initialization Vector, the
+      // result being loaded into a byte array.
       byte[] aesCipher = encryptAES(KXY,IV,digSigAndMsg);
+
+      // First, the Initialization Vector is set to the top
+      // of the encrypted file (It will be exposed to potential
+      // attackers, which is the norm), then append the AES-encrypted 
+      // digital digest (contains RSA(SHA256(msg)) + message)
       saveToFile("message.aescipher",IV);
       append("message.aescipher",aesCipher);
+
+      // Done.
 	}
    
    public static byte[] encryptRSA(PrivateKey KXPrivate, byte[] hash) throws Exception {
