@@ -103,13 +103,15 @@ public class Sender {
 		File f = new File(fileRead);
 	    FileInputStream in = new FileInputStream(f);
 	    int buff = 16;
+	    int count = 1;
 		byte[] ba = new byte[buff]; 
 		int numberOfBytes;
 		try {
 	      while ((numberOfBytes = in.read(ba)) != -1) {
 	    	  if (numberOfBytes == 16) {
-	    		  System.out.println("read " + numberOfBytes + " bytes");
+	    		  System.out.println(count + " read(s) of " + numberOfBytes + " bytes");
 	    		  append(fileWrite,ba);
+	    		  count++;
 	    	  }
 	    	  else {
 	    		  in.getChannel().position(in.getChannel().size() - numberOfBytes);
@@ -128,14 +130,16 @@ public class Sender {
 		File f = new File(fileRead);
 	    FileInputStream in = new FileInputStream(f);
 	    int buff = 16;
+	    int count = 1;
 		byte[] ba = new byte[buff]; 
 		int numberOfBytes;
 		try {
 	      while ((numberOfBytes = in.read(ba)) != -1) {
 	    	  if (numberOfBytes == 16) {
 	    		  encryptAES(KXY, IV, ba);
-	    		  System.out.println("read " + numberOfBytes + " bytes");
+	    		  System.out.println(count + " read(s) of " + numberOfBytes + " bytes");
 	    		  append(fileWrite,ba);
+	    		  count++;
 	    	  }
 	    	  else {
 	    		  in.getChannel().position(in.getChannel().size() - numberOfBytes);
