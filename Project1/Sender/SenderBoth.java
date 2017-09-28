@@ -21,17 +21,17 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- *  *
- *   * This Sender class requires the KeyGen class
- *    * to generate the Symmetric Key, a Private Key and
- *     * a Public Key.
- *      *
- *       * There is also a Receiver program to decrypt the
- *        * ciphertext that this program creates.
- *         *
- *          * 2017 CS3750, w/ Dr. Weiying Zhu's contributed code
- *           * Authors: Egor Muscat, Andrew Tovio Roberts
- *            * */
+ *
+ * This Sender class requires the KeyGen class
+ * to generate the Symmetric Key, a Private Key and
+ * a Public Key.
+ *
+ * There is also a Receiver program to decrypt the
+ * ciphertext that this program creates.
+ *
+ * 2017 CS3750, w/ Dr. Weiying Zhu's contributed code
+ * Authors: Egor Muscat, Andrew Tovio Roberts
+ **/
 
 public class Sender {
 
@@ -50,12 +50,12 @@ public class Sender {
 
       // symmetric.key and XPrivate.key are read from files
       String KXY = readKXYFromFile("symmetric.key");
-	    PrivateKey KXPrivate = readPrivKeyFromFile("XPrivate.key");
+	  	PrivateKey KXPrivate = readPrivKeyFromFile("XPrivate.key");
 
       // Get message file name from user System input
       Scanner in = new Scanner(System.in);
-	    System.out.print("Input the name of the message file: ");
-	    String msg = in.next();
+	  System.out.print("Input the name of the message file: ");
+	  String msg = in.next();
 
 	  // The filename of the plaintext is passed to toByteArr()
       // and then read in and returned as

@@ -17,7 +17,7 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 
 /**
- *  * 
+ *  *
  *   * This Sender class requires the KeyGen class
  *    * to generate the Symmetric Key, a Private Key and
  *     * a Public Key.
@@ -33,42 +33,42 @@ public class SenderTemp {
 
 	public SenderTemp() {
 	}
-	
+
 	public static void main(String[] args) throws Exception{
-	
-      
+
+
       // The Files
       //   symmetric.key
       //   XPrivate.key
       //   XPublic.key
       // are produced by running
       // the program in KeyGen/KeyGen
-		
+
       // symmetric.key and XPrivate.key are read from files
       String KXY = readKXYFromFile("symmetric.key");
 	  PrivateKey KXPrivate = readPrivKeyFromFile("XPrivate.key");
-	  
+
       // Get message file name from user System input
       Scanner in = new Scanner(System.in);
 	  System.out.print("Input the name of the message file: ");
 	  String msg = in.next();
-	     
-      // The filename of the plaintext is passed to messageDigest(), 
-      // which creates a digital digest(hash) of the message 
+
+      // The filename of the plaintext is passed to messageDigest(),
+      // which creates a digital digest(hash) of the message
       // and stored in a byte array hash
       byte[] hash = messageDigest(msg);
 
       // Output to the console the hash in hex
 	  System.out.println("digit digest (hash value):");
 	  toHexa(hash);
-    
+
       // Save the hash to a digital digest file
       saveToFile("message.dd", hash);
 
       // Encrypt the hash with RSA using the Private Key
       // to produce digital signature
       byte[] cipheredHash = encryptRSA(KXPrivate,hash);
-    
+
       // Output to console digital signature in hex (SHA256 enc(hash) + RSA)
       System.out.println("Cipher Text of Digital Signiture:");
 	  toHexa(cipheredHash);
@@ -76,14 +76,14 @@ public class SenderTemp {
 
       // Save the digital signature
       saveToFile("message.dd-msg",cipheredHash);
-      
-      
+
+
       //need new comment         !!!!!!!
       readPtextAndAppend("message.dd-msg",msg);
       System.out.println("appended to message.dd-msg");
-      System.out.println("");  
-      
-      
+      System.out.println("");
+
+
       // Create a random initialization vector
       // and load it into a byte array then save it to file
       byte[] IV = randomIV();
@@ -99,7 +99,7 @@ public class SenderTemp {
       in.close();
       // Done.
 	}
- 
+
 
 
 
@@ -113,14 +113,14 @@ public class SenderTemp {
 
 
 	/**
-     * need a new comment 
+     * need a new comment
      */
 	public static void readPtextAndAppend(String fileWrite,String fileRead) throws Exception {
 		File f = new File(fileRead);
 	    FileInputStream in = new FileInputStream(f);
 	    int buff = 16;
 	    int count = 1;
-		byte[] ba = new byte[buff]; 
+		byte[] ba = new byte[buff];
 		int numberOfBytes;
 		try {
 	      while ((numberOfBytes = in.read(ba)) != -1) {
@@ -139,22 +139,25 @@ public class SenderTemp {
 	       }
 	     } catch (IOException e) {
 	    	e.printStackTrace();
-	   } 
+	   }
 	}
-	
+
 	public static void readEncryptAppend(String fileRead, String fileWrite,byte[] IV, String KXY) throws Exception {
 		File f = new File(fileRead);
 	    FileInputStream in = new FileInputStream(f);
 	    int buff = 16;
 	    int count = 1;
-		byte[] ba = new byte[buff]; 
+		byte[] ba = new byte[buff];
 		int numberOfBytes;
 		try {
 	      while ((numberOfBytes = in.read(ba)) != -1) {
 	    	  if (numberOfBytes == 16) {
 	    		  encryptAES(KXY, IV, ba);
 	    		  System.out.println(count + " read(s) of " + numberOfBytes + " bytes");
-	    		  append(fileWrite,ba);
+						// TESTING:  just checking chunk
+						toHexa(ba);
+
+						append(fileWrite,ba);
 	    		  count++;
 	    	  }
 	    	  else {
@@ -163,16 +166,18 @@ public class SenderTemp {
 	    		  in.read(extraBytes);
 	    		  encryptAES(KXY, IV, extraBytes);
 	    		  System.out.println("read extra " + numberOfBytes + " bytes");
+						// TESTING:  just checking chunk
+						toHexa(extraBytes);
 	    		  append(fileWrite,extraBytes);
 	    	  }
 	       }
 	     } catch (IOException e) {
 	    	e.printStackTrace();
-	   } 
+	   }
 	}
-	
+
    /**
-    * This encryptRSA method uses RSA encryption with a Private Key to 
+    * This encryptRSA method uses RSA encryption with a Private Key to
     * encrypt the SHA256 hash of the message text.
     */
    public static byte[] encryptRSA(PrivateKey KXPrivate, byte[] hash) throws Exception {
@@ -181,10 +186,10 @@ public class SenderTemp {
     	cipher.init(Cipher.ENCRYPT_MODE, KXPrivate, random);
     	return cipher.doFinal(hash);
    }
- 
+
 
    /**
-    *  randomIV() generates an Initialization Vector for 
+    *  randomIV() generates an Initialization Vector for
     *  AES encryption, as a SecureRandom that loads byte
     *  by byte into a byte array. The IV is later placed at
     *  the beginning of the finished ciphertext message.aescipher
@@ -196,23 +201,23 @@ public class SenderTemp {
       random.nextBytes(bytes);
       return bytes;
    }
-   
+
    /**
     * encryptAES() uses the Initialization Vector (IV) and the
     * symmetric key to encrypt the file containing the digital
     * signature and message text.  It returns a byte array
     * to be written out to file.
     *
-    * NOTE: Instead of saving off the remainder bits, 
+    * NOTE: Instead of saving off the remainder bits,
     * we are currently using the PKCS5 Padding option.
     */
-   public static byte[] encryptAES(String symmetricKey, byte[] IV, byte[] digSigAndMsg) throws Exception {
+   public static byte[] encryptAES(String symmetricKey, byte[] IV, byte[] chunkToEncrypt) throws Exception {
       Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
       SecretKeySpec key = new SecretKeySpec(symmetricKey.getBytes("UTF-8"), "AES");
       cipher.init(Cipher.ENCRYPT_MODE, key,new IvParameterSpec(IV));
-      return cipher.doFinal(digSigAndMsg);
+      return cipher.doFinal(chunkToEncrypt);
    }
-  
+
    /**
     * toHexa() takes a byte array and outputs it to the console
     */
@@ -225,7 +230,7 @@ public class SenderTemp {
 		    }
 		}
 	}
-	
+
     /**
      * append() takes a fileName representing the file to be written to, and
      * a byte array that will be written to that file.
@@ -246,9 +251,9 @@ public class SenderTemp {
 			}
 		}
 	}
-	
+
     /**
-     * saveToFile() takes a fileName and a byte array, creates a file with that 
+     * saveToFile() takes a fileName and a byte array, creates a file with that
      * filename and writes to it.
      */
 	public static void saveToFile(String fileName, byte [] arr) throws Exception {
@@ -261,7 +266,7 @@ public class SenderTemp {
 			fos.close();
 		}
 	}
-   
+
 
     /**
      * Provided by Dr. Weiying Zhu.
@@ -282,24 +287,24 @@ public class SenderTemp {
 	   messageDigest = in.getMessageDigest();
 	   in.close();
 	   byte[] hash = messageDigest.digest();
-	   System.out.println("");    
+	   System.out.println("");
 	   return hash;
 	}
-	
+
 	/**
      * readKXYFromFile() takes a String representing the name
      * of the symmetric key and, prints and returns a String representing
      * the symmetric key.
      */
-	public static String readKXYFromFile(String keyFileName) 
+	public static String readKXYFromFile(String keyFileName)
 		      throws IOException {
-		InputStream in = 
+		InputStream in =
 				Sender.class.getResourceAsStream(keyFileName);
 		ObjectInputStream oin =
 				new ObjectInputStream(new BufferedInputStream(in));
 		try {
 			String m = (String) oin.readObject();
-			System.out.println("Read from " + keyFileName + ": msg= " + 
+			System.out.println("Read from " + keyFileName + ": msg= " +
 					m.toString()  + "\n");
 		    String key = m.toString();
 		    return key;
@@ -315,16 +320,16 @@ public class SenderTemp {
      * of the File that contains the private key parameters generated by
      * KeyGen.  It creates and returns the PrivateKey
      */
-	public static PrivateKey readPrivKeyFromFile(String keyFileName) 
+	public static PrivateKey readPrivKeyFromFile(String keyFileName)
 			throws IOException {
-		InputStream in = 
+		InputStream in =
 				Sender.class.getResourceAsStream(keyFileName);
 		ObjectInputStream oin =
 		   		new ObjectInputStream(new BufferedInputStream(in));
 		try {
 			BigInteger m = (BigInteger) oin.readObject();
 		    BigInteger e = (BigInteger) oin.readObject();
-		    System.out.println("Read from " + keyFileName + ": modulus = " + 
+		    System.out.println("Read from " + keyFileName + ": modulus = " +
 		    		m.toString() + ", exponent = " + e.toString() + "\n");
 		    RSAPrivateKeySpec keySpec = new RSAPrivateKeySpec(m, e);
 		    KeyFactory factory = KeyFactory.getInstance("RSA");
