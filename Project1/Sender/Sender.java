@@ -21,24 +21,24 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- *  *
- *   * This Sender class requires the KeyGen class
- *    * to generate the Symmetric Key, a Private Key and
- *     * a Public Key.
- *      *
- *       * There is also a Receiver program to decrypt the
- *        * ciphertext that this program creates.
- *         *
- *          * 2017 CS3750, w/ Dr. Weiying Zhu's contributed code
- *           * Authors: Egor Muscat, Andrew Tovio Roberts
- *            * */
+ *
+ * This Sender class requires the KeyGen class
+ * to generate the Symmetric Key, a Private Key and
+ * a Public Key.
+ *
+ * There is also a Receiver program to decrypt the
+ * ciphertext that this program creates.
+ *
+ * 2017 CS3750, w/ Dr. Weiying Zhu's contributed code
+ * Authors: Egor Muscat, Andrew Tovio Roberts
+ **/
 
 public class Sender {
 
 	public Sender() {
 	}
 
-	public static void main(String[] args) throws Exception{
+	public static void main(String[] args) throws Exception {
 
 
       // The Files
@@ -55,19 +55,24 @@ public class Sender {
       // Get message file name from user System input
       Scanner in = new Scanner(System.in);
 	    System.out.print("Input the name of the message file: ");
-	    String msg = in.next();
+	    String plaintextInput = in.next();
 
-	  // The filename of the plaintext is passed to toByteArr()
+	  	// The filename of the plaintext is passed to toByteArr()
       // and then read in and returned as
       // a byte array.
-      byte[] msgAsByte = toByteArr(msg);
-	  in.close();
+      byte[] msgAsByte = toByteArr(plaintextInput);
+	  	in.close();
 
+			// TESTING: output byte array of plaintext
+			System.out.println();
+			System.out.println("Plaintext as a Byte Array: ");
+			toHexa(msgAsByte);
+			System.out.println();
 
-      // The filename of the plaintext is passed to md(),
+      // The filename of the plaintext is passed to messageDigest(),
       // which creates a digital digest(hash) of the message
       // and stored in a byte array hash
-      byte[] hash = md(msg);
+      byte[] hash = messageDigest(plaintextInput);
 
       // Output to the console the hash in hex
 	  System.out.println("digit digest (hash value):");
@@ -252,24 +257,24 @@ public class Sender {
 
 
     /**
-     * md() stands for message digest. It is provided by Dr. Weiying Zhu.
+     * messageDigest() stands for message digest. It is provided by Dr. Weiying Zhu.
      * It takes a String representing a filename, opens that corresponding file
      * and creates a SHA256 hash from the contents of the file.  It returns the
      * file's hash as a byte array.
      */
-	public static byte[] md(String f) throws Exception {
+	public static byte[] messageDigest(String f) throws Exception {
 	   BufferedInputStream file = new BufferedInputStream(new FileInputStream(f));
-	   MessageDigest md = MessageDigest.getInstance("SHA-256");
-	   DigestInputStream in = new DigestInputStream(file, md);
+	   MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+	   DigestInputStream in = new DigestInputStream(file, messageDigest);
       int BUFFER_SIZE = 32 * 1024;
 	   int i;
 	   byte[] buffer = new byte[BUFFER_SIZE];
 	   do {
 	      i = in.read(buffer, 0, BUFFER_SIZE);
 	   } while (i == BUFFER_SIZE);
-	   md = in.getMessageDigest();
+	   messageDigest = in.getMessageDigest();
 	   in.close();
-	   byte[] hash = md.digest();
+	   byte[] hash = messageDigest.digest();
 	   System.out.println("");
 	   return hash;
 	}

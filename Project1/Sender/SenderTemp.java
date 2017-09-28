@@ -17,17 +17,17 @@ import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
 
 /**
- *  *
- *   * This Sender class requires the KeyGen class
- *    * to generate the Symmetric Key, a Private Key and
- *     * a Public Key.
- *      *
- *       * There is also a Receiver program to decrypt the
- *        * ciphertext that this program creates.
- *         *
- *          * 2017 CS3750, w/ Dr. Weiying Zhu's contributed code
- *           * Authors: Egor Muscat, Andrew Tovio Roberts
- *            * */
+ *
+ * This Sender class requires the KeyGen class
+ * to generate the Symmetric Key, a Private Key and
+ * a Public Key.
+ *
+ * There is also a Receiver program to decrypt the
+ * ciphertext that this program creates.
+ *
+ * 2017 CS3750, w/ Dr. Weiying Zhu's contributed code
+ * Authors: Egor Muscat, Andrew Tovio Roberts
+ **/
 
 public class SenderTemp {
 
@@ -46,21 +46,21 @@ public class SenderTemp {
 
       // symmetric.key and XPrivate.key are read from files
       String KXY = readKXYFromFile("symmetric.key");
-	  PrivateKey KXPrivate = readPrivKeyFromFile("XPrivate.key");
+	  	PrivateKey KXPrivate = readPrivKeyFromFile("XPrivate.key");
 
       // Get message file name from user System input
       Scanner in = new Scanner(System.in);
-	  System.out.print("Input the name of the message file: ");
-	  String msg = in.next();
+	  	System.out.print("Input the name of the message file: ");
+	  	String plaintextInput = in.next();
 
       // The filename of the plaintext is passed to messageDigest(),
       // which creates a digital digest(hash) of the message
       // and stored in a byte array hash
-      byte[] hash = messageDigest(msg);
+      byte[] hash = messageDigest(plaintextInput);
 
       // Output to the console the hash in hex
-	  System.out.println("digit digest (hash value):");
-	  toHexa(hash);
+	  	System.out.println("digit digest (hash value):");
+	  	toHexa(hash);
 
       // Save the hash to a digital digest file
       saveToFile("message2.dd", hash);
@@ -71,7 +71,7 @@ public class SenderTemp {
 
       // Output to console digital signature in hex (SHA256 enc(hash) + RSA)
       System.out.println("Cipher Text of Digital Signiture:");
-	  toHexa(cipheredHash);
+	  	toHexa(cipheredHash);
       System.out.println("");
 
       // Save the digital signature
@@ -79,7 +79,7 @@ public class SenderTemp {
 
 
       //need new comment         !!!!!!!
-      readPtextAndAppend("message2.dd2-msg",msg);
+      readPtextAndAppend("message2.dd2-msg", plaintextInput);
       System.out.println("appended to message2.dd2-msg");
       System.out.println("");
 
@@ -87,7 +87,8 @@ public class SenderTemp {
       // Create a random initialization vector
       // and load it into a byte array then save it to file
       byte[] IV = randomIV();
-      // Print IV to console
+
+			// Print IV to console
       System.out.println();
       System.out.println("Randomly Generated IV:");
       toHexa(IV);
@@ -115,9 +116,9 @@ public class SenderTemp {
 	/**
      * need a new comment
      */
-	public static void readPtextAndAppend(String fileWrite,String fileRead) throws Exception {
-			File f = new File(fileRead);
-	    FileInputStream in = new FileInputStream(f);
+	public static void readPtextAndAppend(String fileWrite, String fileRead) throws Exception {
+			File f = new File( fileRead );
+	    FileInputStream in = new FileInputStream( f );
 	    int buff = 16;
 	    int count = 1;
 			byte[] ba = new byte[buff];
