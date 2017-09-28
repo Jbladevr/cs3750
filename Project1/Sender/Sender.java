@@ -92,6 +92,10 @@ public class Sender {
       // Create a random initialization vector
       // and load it into a byte array
       byte[] IV = randomIV();
+			// Print IV to console
+			System.out.println();
+			System.out.println("Randomly Generated IV:");
+			toHexa(IV);
 
       // The filename of the digital signiture and the original message
       // ((SHA256 + RSA) + original message) is read and loaded into a byte
@@ -108,12 +112,16 @@ public class Sender {
       // of the encrypted file (It will be exposed to potential
       // attackers, which is the norm), then append the AES-encrypted
       // (digital signiture + original message)
-      saveToFile("message.aescipher",IV);
-      append("message.aescipher",aesCipher);
+      saveToFile("IV.byteArray",IV);
+      saveToFile("message.aescipher",aesCipher);
 
       // Done.
 	}
 
+
+	/*****************************************************************/
+	/*                     METHODS SECTION                           */
+	/*****************************************************************/
 
    /**
     * This encryptRSA method uses RSA encryption with a Private Key to
@@ -137,7 +145,12 @@ public class Sender {
 	public static byte[] randomIV(){
       SecureRandom random = new SecureRandom();
       byte[] bytes = new byte[16];
-      random.nextBytes(bytes);
+      // Uncomment for Production:  random.nextBytes(bytes);
+			// TESTING: for loop to populate IV as static
+			for( int i = 0; i < bytes.length; i++) {
+				bytes[i] = (byte) 1;
+			}
+
       return bytes;
    }
 

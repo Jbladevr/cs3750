@@ -63,7 +63,7 @@ public class SenderTemp {
 	  toHexa(hash);
 
       // Save the hash to a digital digest file
-      saveToFile("message.dd", hash);
+      saveToFile("message2.dd", hash);
 
       // Encrypt the hash with RSA using the Private Key
       // to produce digital signature
@@ -75,12 +75,12 @@ public class SenderTemp {
       System.out.println("");
 
       // Save the digital signature
-      saveToFile("message.dd-msg",cipheredHash);
+      saveToFile("message2.dd2-msg",cipheredHash);
 
 
       //need new comment         !!!!!!!
-      readPtextAndAppend("message.dd-msg",msg);
-      System.out.println("appended to message.dd-msg");
+      readPtextAndAppend("message2.dd2-msg",msg);
+      System.out.println("appended to message2.dd2-msg");
       System.out.println("");
 
 
@@ -91,11 +91,11 @@ public class SenderTemp {
       System.out.println();
       System.out.println("Randomly Generated IV:");
       toHexa(IV);
-      saveToFile("IV.byteArray",IV);
+      saveToFile("IV2.byteArray",IV);
 
       //need a new comment
-      readEncryptAppend("message.dd-msg","message.aescipher",IV,KXY);
-      System.out.println("appended to message.aescipher");
+      readEncryptAppend("message2.dd2-msg","message2.aescipher",IV,KXY);
+      System.out.println("appended to message2.aescipher");
       in.close();
       // Done.
 	}
@@ -116,13 +116,13 @@ public class SenderTemp {
      * need a new comment
      */
 	public static void readPtextAndAppend(String fileWrite,String fileRead) throws Exception {
-		File f = new File(fileRead);
+			File f = new File(fileRead);
 	    FileInputStream in = new FileInputStream(f);
 	    int buff = 16;
 	    int count = 1;
-		byte[] ba = new byte[buff];
-		int numberOfBytes;
-		try {
+			byte[] ba = new byte[buff];
+			int numberOfBytes;
+			try {
 	      while ((numberOfBytes = in.read(ba)) != -1) {
 	    	  if (numberOfBytes == 16) {
 	    		  System.out.println(count + " read(s) of " + numberOfBytes + " bytes");
@@ -192,13 +192,17 @@ public class SenderTemp {
     *  randomIV() generates an Initialization Vector for
     *  AES encryption, as a SecureRandom that loads byte
     *  by byte into a byte array. The IV is later placed at
-    *  the beginning of the finished ciphertext message.aescipher
+    *  the beginning of the finished ciphertext message2.aescipher
     *  so that the Decrypt program will be able to use it.
     */
 	public static byte[] randomIV(){
       SecureRandom random = new SecureRandom();
       byte[] bytes = new byte[16];
-      random.nextBytes(bytes);
+			// Uncomment for Production:  random.nextBytes(bytes);
+			// TESTING: for loop to populate IV as static
+			for( int i = 0; i < bytes.length; i++ ) {
+				bytes[i] = (byte) 1;
+			}
       return bytes;
    }
 
