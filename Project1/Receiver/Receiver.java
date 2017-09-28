@@ -58,8 +58,8 @@ public class Receiver {
       // Get message file name from user System input
       Scanner in = new Scanner(System.in);
 	  System.out.print("Input the name of the message file: ");
-	  // UNCOMMENT IN FINISHED PROGRAM: String msg = in.next();
-      String cipherTextName = "message.aescipher";
+	  String cipherTextName = in.next();
+      // String cipherTextName = "message.aescipher";
 
 	  // The filename of the ciphertext is passed to toByteArr()
       // and then read in and returned as
@@ -83,6 +83,19 @@ public class Receiver {
       
       // Read the ciphertext file and decrypt it     
       readDecryptAppend(cipherTextName, "message.ds-msg", IV, KXY);
+
+      // Read first 128 bytes from "message.ds-msg" to get 
+      // the digital signature, ie RSA En[Kx-] (SHA256 (M))
+      byte[] digSig =  readDigSignature("message.ds-msg"); 
+      System.out.println("\n");
+      System.out.println("Cipher Text of Digital Signature:");
+      toHexa(digSig);
+
+
+
+
+
+
 
 
 
@@ -146,7 +159,34 @@ public class Receiver {
 /*                METHODS SECTION                              */
 /***************************************************************/
 
+   /**
+    * readDigSignature()
+    *
+    * returns first 128 bytes from a file
+    */
+    public static byte[] readDigSignature(String fileName) throws Exception {
+        System.out.println("read from " + fileName + "\n");
+        InputStream is = null;
+        byte[] data = new byte[128];
+        try {
+          // below true flag tells OutputStream to append
+          is = new FileInputStream(fileName);
+          is.read(data);
+        } catch (IOException e) {
+          e.printStackTrace();
+        } finally {
+           try {
+             is.close();
+           } catch (IOException e) {
+             e.printStackTrace();
+           }
+           return data;
+        }
+    }
     
+    
+
+
     /**
      * readDecryptAppend() 
      */
@@ -221,7 +261,7 @@ public class Receiver {
 
    /**
     * decryptAES() uses the Initialization Vector (IV) and the
-    * symmetric key to encrypt the file containing the digital
+    * symmetric key to decrypt the file containing the digital
     * signature and message text.  It returns a byte array
     * to be written out to file.
     *
@@ -231,7 +271,7 @@ public class Receiver {
    public static byte[] decryptAES(String symmetricKey, byte[] IV, byte[] digSigAndMsg) throws Exception {
       Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
       SecretKeySpec key = new SecretKeySpec(symmetricKey.getBytes("UTF-8"), "AES");
-      cipher.init(Cipher.ENCRYPT_MODE, key,new IvParameterSpec(IV));
+      cipher.init(Cipher.DECRYPT_MODE, key,new IvParameterSpec(IV));
       return cipher.doFinal(digSigAndMsg);
    }
   
