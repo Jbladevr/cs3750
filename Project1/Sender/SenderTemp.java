@@ -87,6 +87,10 @@ public class SenderTemp {
       // Create a random initialization vector
       // and load it into a byte array then save it to file
       byte[] IV = randomIV();
+      // Print IV to console
+      System.out.println();
+      System.out.println("Randomly Generated IV:");
+      toHexa(IV);
       saveToFile("IV.byteArray",IV);
 
       //need a new comment
@@ -248,7 +252,7 @@ public class SenderTemp {
    
 
     /**
-     * messageDigest() stands for message digest. It is provided by Dr. Weiying Zhu.
+     * Provided by Dr. Weiying Zhu.
      * It takes a String representing a filename, opens that corresponding file
      * and creates a SHA256 hash from the contents of the file.  It returns the
      * file's hash as a byte array.

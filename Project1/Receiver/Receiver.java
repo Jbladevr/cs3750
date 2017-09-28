@@ -24,7 +24,7 @@ import javax.crypto.spec.SecretKeySpec;
  *  * 
  *   * This Receiver class requires the KeyGen class
  *    * to generate the Symmetric Key, a Private Key and
- *     * a Public Key.
+ *     * a Public Key. It also needs IV.byteArray
  *      *
  *       * There is also a Sender program to encrypt the
  *        * ciphertext that this program decrypts.
@@ -47,6 +47,9 @@ public class Receiver {
       //   XPublic.key
       // are produced by running
       // the program in KeyGen/KeyGen
+      //
+      //   IV.byteArray is produced
+      //   by Sender
 		
       // symmetric.key and XPublic.key are read from files
       String KXY = readKXYFromFile("symmetric.key");
@@ -64,16 +67,20 @@ public class Receiver {
       byte[] aesCipherByte = toByteArr(msg);
 	  in.close();
 	 
-      // For storing the IV from the first 16 bytes of the ciphertext
-      byte[] iVbytes = new byte[16];
+      // TESTING: Display the byte array of the msg read from
+      //          message.aescipher
+      System.out.println("\n");
+      System.out.println("Hex Bytes from ciphertext:  ");
+      toHexa(aesCipherByte);
 
-      for(int i = 0; i <= aesCipherByte[16]; i++) {
-        iVbytes[i] = aesCipherByte[i]; 
-      }   
+      // Read IV from IV.byteArray
+      byte[] iVbytes = readBytesFromFile("IV.byteArray");
 
       // Display IV
+      System.out.println("\n");
+      System.out.println("IV read from File:");
       toHexa(iVbytes);
-
+      
 
 
 
@@ -144,19 +151,29 @@ public class Receiver {
  
 
    /**
-    *  randomIV() generates an Initialization Vector for 
-    *  AES encryption, as a SecureRandom that loads byte
-    *  by byte into a byte array. The IV is later placed at
-    *  the beginning of the finished ciphertext message.aescipher
-    *  so that the Decrypt program will be able to use it.
+    * readBytesFromFile() is used here primarily to read the 
+    * IV from the IV.bytearray file.
     */
-	public static byte[] randomIV(){
-      SecureRandom random = new SecureRandom();
-      byte[] bytes = new byte[16];
-      random.nextBytes(bytes);
-      return bytes;
-   }
+   public static byte[] readBytesFromFile(String fileName) {
+      File file = new File(fileName);
+      FileInputStream fileInputStream = null;
+      byte[] bFile = new byte[(int) file.length()];
+      try
+      {
+        // convert file into array of bytes
+        fileInputStream = new FileInputStream(file);
+        fileInputStream.read(bFile);
+        fileInputStream.close();
+      }
+      catch (Exception e) {
+        e.printStackTrace();
+      }
+
+      return bFile;
    
+   }
+
+
    /**
     * encryptAES() uses the Initialization Vector (IV) and the
     * symmetric key to encrypt the file containing the digital
