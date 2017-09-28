@@ -78,9 +78,11 @@ public class SenderTemp {
       saveToFile("message2.dd2-msg",cipheredHash);
 
 
-      //need new comment         !!!!!!!
+      // The plaintext input is read in 16-byte chunks and
+			// is appended to the message2.dd2-msg file.
+			System.out.println("appended to message2.dd2-msg: ");
       readPtextAndAppend("message2.dd2-msg", plaintextInput);
-      System.out.println("appended to message2.dd2-msg");
+
       System.out.println("");
 
 
@@ -93,6 +95,8 @@ public class SenderTemp {
       System.out.println("Randomly Generated IV:");
       toHexa(IV);
       saveToFile("IV2.byteArray",IV);
+
+
 
       //need a new comment
       readEncryptAppend("message2.dd2-msg","message2.aescipher",IV,KXY);
@@ -114,7 +118,8 @@ public class SenderTemp {
 
 
 	/**
-     * need a new comment
+     * readPTextAndAppend reads in 16-byte chunks from a file
+		 * and writes out to another file.
      */
 	public static void readPtextAndAppend(String fileWrite, String fileRead) throws Exception {
 			File f = new File( fileRead );
@@ -127,6 +132,9 @@ public class SenderTemp {
 	      while ((numberOfBytes = in.read(ba)) != -1) {
 	    	  if (numberOfBytes == 16) {
 	    		  System.out.println(count + " read(s) of " + numberOfBytes + " bytes");
+						// TESTING: console output of read
+						toHexa(ba);
+
 	    		  append(fileWrite,ba);
 	    		  count++;
 	    	  }
@@ -135,6 +143,9 @@ public class SenderTemp {
 	    		  byte[] extraBytes = new byte[numberOfBytes];
 	    		  in.read(extraBytes);
 	    		  System.out.println("read extra " + numberOfBytes + " bytes");
+						// TESTING: console output of read
+						toHexa(ba);
+
 	    		  append(fileWrite,extraBytes);
 	    	  }
 	       }
@@ -143,22 +154,27 @@ public class SenderTemp {
 	   }
 	}
 
-	public static void readEncryptAppend(String fileRead, String fileWrite,byte[] IV, String KXY) throws Exception {
-		File f = new File(fileRead);
+	public static void readEncryptAppend(String fileRead, String fileWrite, byte[] IV, String KXY) throws Exception {
+			File f = new File(fileRead);
 	    FileInputStream in = new FileInputStream(f);
 	    int buff = 16;
 	    int count = 1;
-		byte[] ba = new byte[buff];
-		int numberOfBytes;
-		try {
+			byte[] ba = new byte[buff];
+			int numberOfBytes;
+			try {
 	      while ((numberOfBytes = in.read(ba)) != -1) {
 	    	  if (numberOfBytes == 16) {
 	    		  encryptAES(KXY, IV, ba);
 	    		  System.out.println(count + " read(s) of " + numberOfBytes + " bytes");
 						// TESTING:  just checking chunk
 						toHexa(ba);
+						// Create new file if first round
+						if(count == 1) {
+							saveToFile(fileWrite, ba);
+						}	else {
+							append(fileWrite, ba);
+						}
 
-						append(fileWrite,ba);
 	    		  count++;
 	    	  }
 	    	  else {
@@ -219,7 +235,7 @@ public class SenderTemp {
    public static byte[] encryptAES(String symmetricKey, byte[] IV, byte[] chunkToEncrypt) throws Exception {
       Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
       SecretKeySpec key = new SecretKeySpec(symmetricKey.getBytes("UTF-8"), "AES");
-      cipher.init(Cipher.ENCRYPT_MODE, key,new IvParameterSpec(IV));
+      cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(IV));
       return cipher.doFinal(chunkToEncrypt);
    }
 
@@ -245,6 +261,10 @@ public class SenderTemp {
 		try {
 			// below true flag tells OutputStream to append
 			os = new FileOutputStream(new File(fileName), true);
+			// TESTING: seeing how many times this is called
+			System.out.print("           written To " + fileName + " :" );
+			toHexa(data);
+
 			os.write(data);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -262,7 +282,7 @@ public class SenderTemp {
      * filename and writes to it.
      */
 	public static void saveToFile(String fileName, byte [] arr) throws Exception {
-		System.out.println("Write to " + fileName + "\n");
+		System.out.println("Written to " + fileName + "\n");
 		FileOutputStream fos = new FileOutputStream(fileName);
 		try {
 			fos.write(arr);
@@ -271,7 +291,6 @@ public class SenderTemp {
 			fos.close();
 		}
 	}
-
 
     /**
      * Provided by Dr. Weiying Zhu.

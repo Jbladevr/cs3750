@@ -245,7 +245,7 @@ public class Sender {
      * filename and writes to it.
      */
 	public static void saveToFile(String fileName, byte [] arr) throws Exception {
-		System.out.println("Write to " + fileName + "\n");
+		System.out.println("Written to " + fileName + "\n");
 		FileOutputStream fos = new FileOutputStream(fileName);
 		try {
 			fos.write(arr);
