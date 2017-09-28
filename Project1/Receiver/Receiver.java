@@ -59,12 +59,12 @@ public class Receiver {
       Scanner in = new Scanner(System.in);
 	  System.out.print("Input the name of the message file: ");
 	  // UNCOMMENT IN FINISHED PROGRAM: String msg = in.next();
-      String msg = "message.aescipher";
+      String cipherTextName = "message.aescipher";
 
 	  // The filename of the ciphertext is passed to toByteArr()
       // and then read in and returned as
       // a byte array.
-      byte[] aesCipherByte = toByteArr(msg);
+      byte[] aesCipherByte = toByteArr(cipherTextName);
 	  in.close();
 	 
       // TESTING: Display the byte array of the msg read from
@@ -74,15 +74,15 @@ public class Receiver {
       toHexa(aesCipherByte);
 
       // Read IV from IV.byteArray
-      byte[] iVbytes = readBytesFromFile("IV.byteArray");
+      byte[] IV = readBytesFromFile("IV.byteArray");
 
       // Display IV
       System.out.println("\n");
       System.out.println("IV read from File:");
-      toHexa(iVbytes);
+      toHexa(IV);
       
-
-
+      // Read the ciphertext file and decrypt it     
+      readDecryptAppend(cipherTextName, "message.ds-msg", IV, KXY);
 
 
 
@@ -138,7 +138,52 @@ public class Receiver {
 	}
   
 
-   /**
+
+
+
+
+/***************************************************************/
+/*                METHODS SECTION                              */
+/***************************************************************/
+
+    
+    /**
+     * readDecryptAppend() 
+     */
+    public static void readDecryptAppend(String fileRead, String fileWrite, byte[] IV, String KXY) throws Exception {
+        File f = new File(fileRead);
+        FileInputStream in = new FileInputStream(f);
+        int buff = 16;
+        int count = 1;
+        byte[] ba = new byte[buff]; 
+        int numberOfBytes;
+                                                            
+        try {
+            while ((numberOfBytes = in.read(ba)) != -1) {                           
+              if (numberOfBytes == 16) {
+                    decryptAES(KXY, IV, ba);
+                    System.out.println(count + " read(s) of " + numberOfBytes + " bytes");
+                    append(fileWrite,ba);
+                    count++;
+                }
+                else {
+                    in.getChannel().position(in.getChannel().size() - numberOfBytes);
+                    byte[] extraBytes = new byte[numberOfBytes];
+                    in.read(extraBytes);
+                    decryptAES(KXY, IV, extraBytes);
+                    System.out.println("read extra " + numberOfBytes + " bytes");
+                    append(fileWrite,extraBytes);
+                }
+            }
+         } catch (IOException e) {
+            e.printStackTrace();
+         } 
+    }
+    
+    
+    
+    
+    /**
     * This encryptRSA method uses RSA encryption with a Private Key to 
     * encrypt the SHA256 hash of the message text.
     */
@@ -175,7 +220,7 @@ public class Receiver {
 
 
    /**
-    * encryptAES() uses the Initialization Vector (IV) and the
+    * decryptAES() uses the Initialization Vector (IV) and the
     * symmetric key to encrypt the file containing the digital
     * signature and message text.  It returns a byte array
     * to be written out to file.
