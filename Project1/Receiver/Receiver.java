@@ -21,7 +21,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- *  * 
+ *  *
  *   * This Receiver class requires the KeyGen class
  *    * to generate the Symmetric Key, a Private Key and
  *     * a Public Key. It also needs IV.byteArray
@@ -37,10 +37,10 @@ public class Receiver {
 
 	public Receiver() {
 	}
-	
+
 	public static void main(String[] args) throws Exception{
-	
-      
+
+
       // The Files
       //   symmetric.key
       //   XPrivate.key
@@ -50,23 +50,23 @@ public class Receiver {
       //
       //   IV.byteArray is produced
       //   by Sender
-		
+
       // symmetric.key and XPublic.key are read from files
       String KXY = readKXYFromFile("symmetric.key");
 	  PublicKey KXPublic = readPublicKeyFromFile("XPublic.key");
-	  
+
       // Get message file name from user System input
       Scanner in = new Scanner(System.in);
 	  System.out.print("Input the name of the message file: ");
 	  String plainText = in.next();
-      
+
 
 	  // The filename of the ciphertext is passed to toByteArr()
       // and then read in and returned as
-      // a byte array. 
+      // a byte array.
       byte[] aesCipherByte = readBytesFromFile("message.aescipher");
 	  in.close();
-	 
+
       // TESTING: Display the byte array of the msg read from
       //          message.aescipher
       System.out.println("\n");
@@ -80,54 +80,54 @@ public class Receiver {
       System.out.println("\n");
       System.out.println("IV read from File:");
       toHexa(IV);
-      
-      // Decrypt ciphertext and put it in the byte []     
+
+      // Decrypt ciphertext and put it in the byte []
       byte[] decryptedAESByte = decryptAES(KXY,IV,aesCipherByte);
       // Save the ciphertext byte[] to file
       saveToFile("message.ds-msg",decryptedAESByte);
-      
-      // Read first 128 bytes from "message.ds-msg" to get 
+
+      // Read first 128 bytes from "message.ds-msg" to get
       // the digital signature, ie RSA En[Kx-] (SHA256 (M))
       byte[] digSig =  readDigSignature("message.ds-msg");
-   
-      
+
+
       byte[] msg = readMessageByte(decryptedAESByte);
       saveToFile(plainText,msg);
-       
+
       System.out.println("\n");
       System.out.println("Cipher Text of Digital Signature:");
       toHexa(digSig);
       System.out.println();
-      
-       
+
+
       byte[] receivedHash = decryptRSA(KXPublic,digSig);
       saveToFile("message.dd",receivedHash);
       System.out.println();
       System.out.println("Received hash:");
       toHexa(receivedHash);
       System.out.println();
-        
-      byte[] hash = md("tt.txt");
+
+      byte[] hash = md(plainText);
       /* DEBUG
       System.out.println();
       System.out.println("Hash from the msg:");
       toHexa(receivedHash);
       System.out.println();
       */
-      
+
       System.out.println(compareHashes(receivedHash,hash));
-      
+
       /* DEBUG
       String stringMSG = new String(msg);
       System.out.println("Message is :");
       System.out.println(stringMSG);
 	   */
    }
-   
+
 /***************************************************************/
 /*                METHODS SECTION                              */
 /***************************************************************/
-   
+
    // Compares 2 byte []
    public static String compareHashes(byte [] received, byte[] text){
       if (Arrays.equals(received,text)){
@@ -139,8 +139,8 @@ public class Receiver {
          return no;
       }
    }
-   
-   // Reads the ciphertext and splits the message from the 
+
+   // Reads the ciphertext and splits the message from the
    // first 128 bytes.
    public static byte[] readMessageByte(byte [] in){
       int temp = 128;
@@ -150,7 +150,7 @@ public class Receiver {
       }
       return out;
    }
-   
+
    /**
     * readDigSignature()
     *
@@ -175,9 +175,9 @@ public class Receiver {
            return data;
         }
     }
-    
+
     /*
-     This encryptRSA method uses RSA encryption with a Private Key to 
+     This encryptRSA method uses RSA encryption with a Private Key to
      encrypt the SHA256 hash of the message text.
     */
    public static byte[] decryptRSA(PublicKey KXPublic, byte[] hash) throws Exception {
@@ -186,9 +186,9 @@ public class Receiver {
     	cipher.init(Cipher.DECRYPT_MODE, KXPublic);
     	return cipher.doFinal(hash);
    }
- 
+
     /*
-     readBytesFromFile() is used here primarily to read the 
+     readBytesFromFile() is used here primarily to read the
      IV from the IV.bytearray file.
     */
    public static byte[] readBytesFromFile(String fileName) {
@@ -207,7 +207,7 @@ public class Receiver {
       }
 
       return bFile;
-   
+
    }
 
 
@@ -217,7 +217,7 @@ public class Receiver {
     * signature and message text.  It returns a byte array
     * to be written out to file.
     *
-    * NOTE: Instead of saving off the remainder bits, 
+    * NOTE: Instead of saving off the remainder bits,
     * we are currently using the PKCS5 Padding option.
     */
    public static byte[] decryptAES(String symmetricKey, byte[] IV, byte[] digSigAndMsg) throws Exception {
@@ -226,7 +226,7 @@ public class Receiver {
       cipher.init(Cipher.DECRYPT_MODE, key,new IvParameterSpec(IV));
       return cipher.doFinal(digSigAndMsg);
    }
-  
+
    /**
     * toHexa() takes a byte array and outputs it to the console
     */
@@ -239,12 +239,12 @@ public class Receiver {
 		    }
 		}
 	}
-	
+
 
     /**
      * toByteArr() takes a String representing the name of a file
-     * and opens the File corresponding to that name, using a 
-     * FileInputStream. It returns a byte array. 
+     * and opens the File corresponding to that name, using a
+     * FileInputStream. It returns a byte array.
      */
 	public static byte[] toByteArr(String file) throws Exception {
 		FileInputStream fileInputStream = null;
@@ -268,7 +268,7 @@ public class Receiver {
 	   }
 	   return ba;
 	}
-	
+
 
     /**
      * append() takes a fileName representing the file to be written to, and
@@ -291,9 +291,9 @@ public class Receiver {
 			}
 		}
 	}
-	
+
     /**
-     * saveToFile() takes a fileName and a byte array, creates a file with that 
+     * saveToFile() takes a fileName and a byte array, creates a file with that
      * filename and writes to it.
      */
 	public static void saveToFile(String fileName, byte [] arr) throws Exception {
@@ -306,7 +306,7 @@ public class Receiver {
 			fos.close();
 		}
 	}
-   
+
 
     /**
      * md() stands for message digest. It is provided by Dr. Weiying Zhu.
@@ -327,24 +327,24 @@ public class Receiver {
 	   md = in.getMessageDigest();
 	   in.close();
 	   byte[] hash = md.digest();
-	   System.out.println("");    
+	   System.out.println("");
 	   return hash;
 	}
-	
+
 	/**
      * readKXYFromFile() takes a String representing the name
      * of the symmetric key and, prints and returns a String representing
      * the symmetric key.
      */
-	public static String readKXYFromFile(String keyFileName) 
+	public static String readKXYFromFile(String keyFileName)
 		      throws IOException {
-		InputStream in = 
+		InputStream in =
 				Receiver.class.getResourceAsStream(keyFileName);
 		ObjectInputStream oin =
 				new ObjectInputStream(new BufferedInputStream(in));
 		try {
 			String m = (String) oin.readObject();
-			System.out.println("Read from " + keyFileName + ": msg= " + 
+			System.out.println("Read from " + keyFileName + ": msg= " +
 					m.toString()  + "\n");
 		    String key = m.toString();
 		    return key;
@@ -360,16 +360,16 @@ public class Receiver {
      * of the File that contains the private key parameters generated by
      * KeyGen.  It creates and returns the PrivateKey
      */
-	public static PublicKey readPublicKeyFromFile(String keyFileName) 
+	public static PublicKey readPublicKeyFromFile(String keyFileName)
 			throws IOException {
-		InputStream in = 
+		InputStream in =
 				Receiver.class.getResourceAsStream(keyFileName);
 		ObjectInputStream oin =
 		   		new ObjectInputStream(new BufferedInputStream(in));
 		try {
 			BigInteger m = (BigInteger) oin.readObject();
 		    BigInteger e = (BigInteger) oin.readObject();
-		    System.out.println("Read from " + keyFileName + ": modulus = " + 
+		    System.out.println("Read from " + keyFileName + ": modulus = " +
 		    		m.toString() + ", exponent = " + e.toString() + "\n");
 		    RSAPublicKeySpec keySpec = new RSAPublicKeySpec(m, e);
 		    KeyFactory factory = KeyFactory.getInstance("RSA");
