@@ -10,11 +10,15 @@ import java.security.spec.RSAPrivateKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Scanner;
 import javax.crypto.Cipher;
+import java.security.MessageDigest;
 import java.util.Arrays;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 /**
  *
@@ -29,9 +33,9 @@ import javax.crypto.spec.IvParameterSpec;
  * Authors: Egor Muscat, Andrew Tovio Roberts
  **/
 
-public class SenderTemp {
+public class SenderNew {
 
-	public SenderTemp() {
+	public SenderNew() {
 	}
 
 	public static void main(String[] args) throws Exception{
@@ -53,149 +57,84 @@ public class SenderTemp {
 	  	System.out.print("Input the name of the message file: ");
 	  	String plaintextInput = in.next();
 
+	  // The filename of the plaintext is passed to toByteArr()
+      // and then read in and returned as
+      // a byte array.
+      byte[] msgAsByte = toByteArr(plaintextInput);
+	  	in.close();
+
+
       // The filename of the plaintext is passed to messageDigest(),
       // which creates a digital digest(hash) of the message
-      // and stored in a byte array hash
+      // and stores it in a byte array hash
       byte[] hash = messageDigest(plaintextInput);
 
       // Output to the console the hash in hex
-	  	System.out.println("digit digest (hash value):");
-	  	toHexa(hash);
+	  System.out.println("digit digest (hash value):");
+	  toHexa(hash);
 
       // Save the hash to a digital digest file
-      saveToFile("message2.dd", hash);
+      saveToFile("message.dd", hash);
 
       // Encrypt the hash with RSA using the Private Key
-      // to produce digital signature
+      // to produce digital signiture
       byte[] cipheredHash = encryptRSA(KXPrivate,hash);
 
-      // Output to console digital signature in hex (SHA256 enc(hash) + RSA)
+      // Output to console digital signiture in hex (SHA256 enc(hash) + RSA)
       System.out.println("Cipher Text of Digital Signiture:");
 	  	toHexa(cipheredHash);
       System.out.println("");
 
-      // Save the digital signature
-      saveToFile("message2.dd2-msg",cipheredHash);
-
-
-      // The plaintext input is read in 16-byte chunks and
-			// is appended to the message2.dd2-msg file.
-			System.out.println("appended to message2.dd2-msg: ");
-      readPtextAndAppend("message2.dd2-msg", plaintextInput);
-
-      System.out.println("");
-
+      // Save the digital signiture then the original message to file
+      saveToFile("message.dd-msg",cipheredHash);
+      append("message.dd-msg",msgAsByte);
 
       // Create a random initialization vector
-      // and load it into a byte array then save it to file
+      // and load it into a byte array
       byte[] IV = randomIV();
+      saveToFile("IV.byteArray",IV);
+      //for debugging
+      System.out.print("IV in Hex: ");
+	   	toHexa(IV);
+      System.out.println("");
 
-			// Print IV to console
-      System.out.println();
-      System.out.println("Randomly Generated IV:");
-      toHexa(IV);
-      saveToFile("IV2.byteArray",IV);
+      // The filename of the digital signiture and the original
+      // message ((SHA256 + RSA) + original message) is read
+      // and loaded into a byte array
+      byte[] digSigAndMsg = toByteArr("message.dd-msg");
+
+      /* debugging
+      System.out.println("before: ");
+      toHexa(digSigAndMsg);
+      System.out.println("");
+      */
+
+      // AES encryption with padding using the
+      // Symmetric key and the Initialization Vector, together with the
+      // digital signiture + original message.
+      // Result being loaded into a byte array.
+      byte[] aesCipher = encryptAES(KXY,IV,digSigAndMsg);
 
 
+      /* debugging
+      byte[] backTest = decryptAES(KXY,IV,aesCipher);
+      System.out.println("after: ");
+      toHexa(backTest);
+      System.out.println("");
+      */
 
-      //need a new comment
-      readEncryptAppend("message2.dd2-msg","message2.aescipher",IV,KXY);
-      System.out.println("appended to message2.aescipher");
-      in.close();
+      // First, the Initialization Vector is set to the top
+      // of the encrypted file (It will be exposed to potential
+      // attackers, which is the norm), then append the AES-encrypted
+      // (digital signiture + original message)
+      saveToFile("message.aescipher",aesCipher);
+
       // Done.
 	}
 
-
-
-
-
-
-
-
-/*****************************************************************/
-/*                     METHODS SECTION                           */
-/*****************************************************************/
-
-
-	/**
-     * readPTextAndAppend reads in 16-byte chunks from a file
-		 * and writes out to another file.
-     */
-	public static void readPtextAndAppend(String fileWrite, String fileRead) throws Exception {
-			File f = new File( fileRead );
-	    FileInputStream in = new FileInputStream( f );
-	    int buff = 16;
-	    int count = 1;
-			byte[] ba = new byte[buff];
-			int numberOfBytes;
-			try {
-	      while ((numberOfBytes = in.read(ba)) != -1) {
-	    	  if (numberOfBytes == 16) {
-	    		  System.out.println(count + " read(s) of " + numberOfBytes + " bytes");
-						// TESTING: console output of read
-						toHexa(ba);
-
-	    		  append(fileWrite,ba);
-	    		  count++;
-	    	  }
-	    	  else {
-	    		  in.getChannel().position(in.getChannel().size() - numberOfBytes);
-	    		  byte[] extraBytes = new byte[numberOfBytes];
-	    		  in.read(extraBytes);
-	    		  System.out.println("read extra " + numberOfBytes + " bytes");
-						// TESTING: console output of read
-						toHexa(ba);
-
-	    		  append(fileWrite,extraBytes);
-	    	  }
-	       }
-	     } catch (IOException e) {
-	    	e.printStackTrace();
-	   }
-	}
-
-	public static void readEncryptAppend(String fileRead, String fileWrite, byte[] IV, String KXY) throws Exception {
-			File f = new File(fileRead);
-	    FileInputStream in = new FileInputStream(f);
-	    int buff = 16;
-	    int count = 1;
-			byte[] ba = new byte[buff];
-			int numberOfBytes;
-			try {
-	      while ((numberOfBytes = in.read(ba)) != -1) {
-	    	  if (numberOfBytes == 16) {
-						// TESTING: checking the before encryptAES
-						System.out.print("before AES: ");
-						toHexa(ba);
-	    		  encryptAES(KXY, IV, ba);
-	    		  System.out.println(count + " read(s) of " + numberOfBytes + " bytes");
-						// TESTING:  just checking chunk
-						System.out.print("after AES: ");
-						toHexa(ba);
-						// Create new file if first round
-						if(count == 1) {
-							saveToFile(fileWrite, ba);
-						}	else {
-							append(fileWrite, ba);
-						}
-
-	    		  count++;
-	    	  }
-	    	  else {
-	    		  in.getChannel().position(in.getChannel().size() - numberOfBytes);
-	    		  byte[] extraBytes = new byte[numberOfBytes];
-	    		  in.read(extraBytes);
-	    		  encryptAES(KXY, IV, extraBytes);
-	    		  System.out.println("read extra " + numberOfBytes + " bytes");
-						// TESTING:  just checking chunk
-						toHexa(extraBytes);
-	    		  append(fileWrite,extraBytes);
-	    	  }
-	       }
-	     } catch (IOException e) {
-	    	e.printStackTrace();
-	   }
-	}
+	/*****************************************************************/
+	/*                     METHODS SECTION                           */
+	/*****************************************************************/
 
    /**
     * This encryptRSA method uses RSA encryption with a Private Key to
@@ -213,17 +152,13 @@ public class SenderTemp {
     *  randomIV() generates an Initialization Vector for
     *  AES encryption, as a SecureRandom that loads byte
     *  by byte into a byte array. The IV is later placed at
-    *  the beginning of the finished ciphertext message2.aescipher
+    *  the beginning of the finished ciphertext message.aescipher
     *  so that the Decrypt program will be able to use it.
     */
 	public static byte[] randomIV(){
       SecureRandom random = new SecureRandom();
       byte[] bytes = new byte[16];
-			// Uncomment for Production:  random.nextBytes(bytes);
-			// TESTING: for loop to populate IV as static
-			for( int i = 0; i < bytes.length; i++ ) {
-				bytes[i] = (byte) 1;
-			}
+      random.nextBytes(bytes);
       return bytes;
    }
 
@@ -236,12 +171,21 @@ public class SenderTemp {
     * NOTE: Instead of saving off the remainder bits,
     * we are currently using the PKCS5 Padding option.
     */
-   public static byte[] encryptAES(String symmetricKey, byte[] IV, byte[] chunkToEncrypt) throws Exception {
+   public static byte[] encryptAES(String symmetricKey, byte[] IV, byte[] digSigAndMsg) throws Exception {
       Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
       SecretKeySpec key = new SecretKeySpec(symmetricKey.getBytes("UTF-8"), "AES");
-      cipher.init(Cipher.ENCRYPT_MODE, key, new IvParameterSpec(IV));
-      return cipher.doFinal(chunkToEncrypt);
+      cipher.init(Cipher.ENCRYPT_MODE, key,new IvParameterSpec(IV));
+      return cipher.doFinal(digSigAndMsg);
    }
+
+   /* debugging
+   public static byte[] decryptAES(String symmetricKey, byte[] IV, byte[] cipherText) throws Exception{
+      Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
+      SecretKeySpec key = new SecretKeySpec(symmetricKey.getBytes("UTF-8"), "AES");
+      cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(IV));
+    return cipher.doFinal(cipherText);
+  }
+   */
 
    /**
     * toHexa() takes a byte array and outputs it to the console
@@ -256,20 +200,47 @@ public class SenderTemp {
 		}
 	}
 
+
+    /**
+     * toByteArr() takes a String representing the name of a file
+     * and opens the File corresponding to that name, using a
+     * FileInputStream. It returns a byte array.
+     */
+	public static byte[] toByteArr(String file) throws Exception {
+		FileInputStream fileInputStream = null;
+	   byte[] ba = null;
+	   try {
+	      File f = new File(file);
+	      ba = new byte[(int) f.length()];
+	      //read file into bytes[]
+	      fileInputStream = new FileInputStream(f);
+	      fileInputStream.read(ba);
+	   } catch (IOException e) {
+	    	e.printStackTrace();
+	   } finally {
+	    	if (fileInputStream != null) {
+	      try {
+	         fileInputStream.close();
+	      } catch (IOException e) {
+	        	e.printStackTrace();
+	      }
+	      }
+	   }
+	   return ba;
+	}
+
+
     /**
      * append() takes a fileName representing the file to be written to, and
      * a byte array that will be written to that file.
      */
 	public static void append(String fileName, byte[] data) throws Exception {
+		System.out.println("append to " + fileName + "\n");
 		OutputStream os = null;
 		try {
 			// below true flag tells OutputStream to append
 			os = new FileOutputStream(new File(fileName), true);
-			// TESTING: seeing how many times this is called
-			System.out.print("           written To " + fileName + " :" );
-			toHexa(data);
-
-			os.write(data);
+			os.write(data, 0, data.length);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
@@ -286,7 +257,7 @@ public class SenderTemp {
      * filename and writes to it.
      */
 	public static void saveToFile(String fileName, byte [] arr) throws Exception {
-		System.out.println("Written to " + fileName + "\n");
+		System.out.println("Write to " + fileName + "\n");
 		FileOutputStream fos = new FileOutputStream(fileName);
 		try {
 			fos.write(arr);
@@ -296,10 +267,12 @@ public class SenderTemp {
 		}
 	}
 
+
     /**
-     * Provided by Dr. Weiying Zhu.
-     * It takes a String representing a filename, opens that corresponding file
-     * and creates a SHA256 hash from the contents of the file.  It returns the
+     * messageDigest() stands for message digest. It is provided
+     * by Dr. Weiying Zhu. It takes a String representing a
+		 * filename, opens that corresponding file and creates a
+     * SHA256 hash from the contents of the file.  It returns the
      * file's hash as a byte array.
      */
 	public static byte[] messageDigest(String f) throws Exception {
