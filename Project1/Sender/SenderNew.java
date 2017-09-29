@@ -69,8 +69,8 @@ public class SenderNew {
       byte[] hash = messageDigest(plaintextInput);
 
       // Output to the console the hash in hex
-	  System.out.println("digit digest (hash value):");
-	  toHexa(hash);
+	  	System.out.println("digit digest (hash value):");
+	  	toHexa(hash);
 
       // Save the hash to a digital digest file
       saveToFile("message.dd", hash);
@@ -112,7 +112,7 @@ public class SenderNew {
       // Symmetric key and the Initialization Vector, together with the
       // digital signiture + original message.
       // Result being loaded into a byte array.
-      byte[] aesCipher = encryptAES(KXY,IV,digSigAndMsg);
+      byte[] aesCipher = encryptAES(KXY, IV, digSigAndMsg);
 
 
       /* debugging
@@ -122,11 +122,9 @@ public class SenderNew {
       System.out.println("");
       */
 
-      // First, the Initialization Vector is set to the top
-      // of the encrypted file (It will be exposed to potential
-      // attackers, which is the norm), then append the AES-encrypted
+      // Save the AES-encrypted
       // (digital signiture + original message)
-      saveToFile("message.aescipher",aesCipher);
+      saveToFile("message.aescipher", aesCipher);
 
       // Done.
 	}
@@ -152,13 +150,17 @@ public class SenderNew {
     *  AES encryption, as a SecureRandom that loads byte
     *  by byte into a byte array. The IV is later placed at
     *  the beginning of the finished ciphertext message.aescipher
-    *  so that the Decrypt program will be able to use it.
+    *  so that Decrypt program will be able to use it.
     */
 	public static byte[] randomIV(){
       SecureRandom random = new SecureRandom();
       byte[] bytes = new byte[16];
-      random.nextBytes(bytes);
-      return bytes;
+			// Uncomment for Production:  random.nextBytes(bytes);
+			// TESTING: for loop to populate IV as static
+			for( int i = 0; i < bytes.length; i++ ) {
+				bytes[i] = (byte) 1;
+			}
+			return bytes;
    }
 
    /**

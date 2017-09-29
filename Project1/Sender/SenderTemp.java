@@ -160,6 +160,10 @@ public class SenderTemp {
 	    int buff = 16;
 	    int count = 1;
 			byte[] ba = new byte[buff];
+			// testing return from AES
+			byte[] encryptedChunk = new byte[buff];
+
+
 			int numberOfBytes;
 			try {
 	      while ((numberOfBytes = in.read(ba)) != -1) {
@@ -167,16 +171,16 @@ public class SenderTemp {
 						// TESTING: checking the before encryptAES
 						System.out.print("before AES: ");
 						toHexa(ba);
-	    		  encryptAES(KXY, IV, ba);
+	    		  encryptedChunk = encryptAES(KXY, IV, ba);
 	    		  System.out.println(count + " read(s) of " + numberOfBytes + " bytes");
 						// TESTING:  just checking chunk
 						System.out.print("after AES: ");
-						toHexa(ba);
+						toHexa(encryptedChunk);
 						// Create new file if first round
 						if(count == 1) {
-							saveToFile(fileWrite, ba);
+							saveToFile(fileWrite, encryptedChunk);
 						}	else {
-							append(fileWrite, ba);
+							append(fileWrite, encryptedChunk);
 						}
 
 	    		  count++;
@@ -184,12 +188,13 @@ public class SenderTemp {
 	    	  else {
 	    		  in.getChannel().position(in.getChannel().size() - numberOfBytes);
 	    		  byte[] extraBytes = new byte[numberOfBytes];
-	    		  in.read(extraBytes);
-	    		  encryptAES(KXY, IV, extraBytes);
+						byte[] extraEncryptedChunk = new byte[extraBytes.length];
+						in.read(extraBytes);
+	    		  extraEncryptedChunk = encryptAES(KXY, IV, extraBytes);
 	    		  System.out.println("read extra " + numberOfBytes + " bytes");
 						// TESTING:  just checking chunk
-						toHexa(extraBytes);
-	    		  append(fileWrite,extraBytes);
+						toHexa(extraEncryptedChunk);
+	    		  append(fileWrite, extraEncryptedChunk);
 	    	  }
 	       }
 	     } catch (IOException e) {

@@ -64,7 +64,7 @@ public class Receiver {
 	  // The filename of the ciphertext is passed to toByteArr()
       // and then read in and returned as
       // a byte array.
-      byte[] aesCipherByte = readBytesFromFile("message.aescipher");
+      byte[] aesCipherByte = readBytesFromFile("message2.aescipher");
 	  	in.close();
 
       // TESTING: Display the byte array of the msg read from
@@ -74,7 +74,7 @@ public class Receiver {
       toHexa(aesCipherByte);
 
       // Read IV from IV.byteArray
-      byte[] IV = readBytesFromFile("IV.byteArray");
+      byte[] IV = readBytesFromFile("IV2.byteArray");
 
       // Display IV
       System.out.println("\n");
@@ -83,6 +83,7 @@ public class Receiver {
 
       // Decrypt ciphertext and put it in the byte []
       byte[] decryptedAESByte = decryptAES(KXY,IV,aesCipherByte);
+
       // Save the ciphertext byte[] to file
       saveToFile("message.ds-msg",decryptedAESByte);
 
