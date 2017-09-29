@@ -21,7 +21,6 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- *
  * This Sender class requires the KeyGen class
  * to generate the Symmetric Key, a Private Key and
  * a Public Key.
