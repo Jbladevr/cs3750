@@ -124,13 +124,13 @@ public class SenderTemp {
 	public static void readPtextAndAppend(String fileWrite, String fileRead) throws Exception {
 			File f = new File( fileRead );
 	    FileInputStream in = new FileInputStream( f );
-	    int buff = 16;
+	    int buff = 1024;
 	    int count = 1;
 			byte[] ba = new byte[buff];
 			int numberOfBytes;
 			try {
 	      while ((numberOfBytes = in.read(ba)) != -1) {
-	    	  if (numberOfBytes == 16) {
+	    	  if (numberOfBytes == 1024) {
 	    		  System.out.println(count + " read(s) of " + numberOfBytes + " bytes");
 						// TESTING: console output of read
 						toHexa(ba);
