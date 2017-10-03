@@ -96,7 +96,7 @@ public class Sender {
 		toHexa( IV );
 		System.out.println( "" );
 
-		// Using the symmetric key, encrypt the digital digest + message
+		// Using the symmetric key, encrypt the digital signature + message
 		//   and output the encrypted file message.aescipher
 		encryptAES( KXY, "message.dd-msg", "message.aescipher", IV );
 
