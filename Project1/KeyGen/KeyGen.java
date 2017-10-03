@@ -13,67 +13,64 @@ public class KeyGen
 {
 	public KeyGen(){};
 	public static void main(String[] args) throws Exception {
-		//Generate a pair of keys
-	    	SecureRandom random = new SecureRandom();
-	    	KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
-	    	generator.initialize(1024, random);  //1024: key size in bits
-	    	KeyPair pairX = generator.generateKeyPair();
-	    	Key kXpublic = pairX.getPublic();
-	    	Key kXprivate = pairX.getPrivate();
-	    	KeyPair pairY = generator.generateKeyPair();
-	    	Key kYpublic = pairY.getPublic();
-	    	Key kYprivate = pairY.getPrivate();
-
-         //User input for 16 char symmetric key (work in progress, basic version)
-		    Scanner input = new Scanner(System.in);
-
-            int counter = 0;
-            String kXY = "";
-            System.out.print("Enter 16 characters: " );
-
-            while(kXY.length() < 16 || kXY.length() > 16) {
-                
-	            kXY = input.nextLine();
-	            if(kXY.length() < 16 || kXY.length() > 16 ) System.out.println("You must input 16 characters for the Key");
+		//Generate two pairs of keys (X and Y).
+	   	SecureRandom random = new SecureRandom();
+	   	KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+	   	//1024: key size in bits
+	   	generator.initialize(1024, random);  
+	   	KeyPair pairX = generator.generateKeyPair();
+	   	Key kXpublic = pairX.getPublic();
+	   	Key kXprivate = pairX.getPrivate();
+	   	KeyPair pairY = generator.generateKeyPair();
+	   	Key kYpublic = pairY.getPublic();
+	   	Key kYprivate = pairY.getPrivate();
+        //user input for symmetric key generation
+	   	Scanner input = new Scanner(System.in);
+        int counter = 0;
+        String kXY = "";
+        System.out.print("Enter 16 characters: " );
+        while(kXY.length() < 16 || kXY.length() > 16) {
+        	kXY = input.nextLine();
+	        if(kXY.length() < 16 || kXY.length() > 16 ){ 
+	        	System.out.println("You must input 16 characters for the Key");
+	            System.out.print("Enter 16 characters: " );
             }
-
-            input.close();
-	    	//get the parameters of the keys: modulus and exponet
-	    	KeyFactory factory = KeyFactory.getInstance("RSA");
-	    	RSAPublicKeySpec pubKXSpec = factory.getKeySpec(kXpublic, 
-	        RSAPublicKeySpec.class);
-	    	RSAPrivateKeySpec privKXSpec = factory.getKeySpec(kXprivate, 
-	        RSAPrivateKeySpec.class);
-	    	RSAPublicKeySpec pubKYSpec = factory.getKeySpec(kYpublic, 
-	        RSAPublicKeySpec.class);
-	    	RSAPrivateKeySpec privKYSpec = factory.getKeySpec(kYprivate, 
-	        RSAPrivateKeySpec.class);
-           
-
-	    	//save the parameters of the keys to the files, and save symmetric key
-	    	saveToFilePair("XPublic.key", pubKXSpec.getModulus(), 
-	        pubKXSpec.getPublicExponent());
-	    	saveToFilePair("XPrivate.key", privKXSpec.getModulus(), 
-	        privKXSpec.getPrivateExponent());
-	    	saveToFilePair("YPublic.key", pubKYSpec.getModulus(), 
-	        pubKYSpec.getPublicExponent());
-	    	saveToFilePair("YPrivate.key", privKYSpec.getModulus(), 
-	        privKYSpec.getPrivateExponent());
-         saveToFileKXY("symmetric.key",kXY);
+        }
+        input.close();
+	    //get the parameters of the keys: modulus and exponet
+        KeyFactory factory = KeyFactory.getInstance("RSA");
+	    RSAPublicKeySpec pubKXSpec = factory.getKeySpec(kXpublic, 
+	    		RSAPublicKeySpec.class);
+	    RSAPrivateKeySpec privKXSpec = factory.getKeySpec(kXprivate, 
+	    		RSAPrivateKeySpec.class);
+	    RSAPublicKeySpec pubKYSpec = factory.getKeySpec(kYpublic, 
+	    		RSAPublicKeySpec.class);
+	    RSAPrivateKeySpec privKYSpec = factory.getKeySpec(kYprivate, 
+	    		RSAPrivateKeySpec.class);
+        //save the parameters of the keys to the files, and save symmetric key
+	    saveToFilePair("XPublic.key", pubKXSpec.getModulus(), 
+	    pubKXSpec.getPublicExponent());
+	    saveToFilePair("XPrivate.key", privKXSpec.getModulus(), 
+	    privKXSpec.getPrivateExponent());
+	    saveToFilePair("YPublic.key", pubKYSpec.getModulus(), 
+	    pubKYSpec.getPublicExponent());
+	    saveToFilePair("YPrivate.key", privKYSpec.getModulus(), 
+	    privKYSpec.getPrivateExponent());
+	    saveToFileKXY("symmetric.key",kXY);
 	}
 
 	public static void saveToFilePair(String fileName,
 	        BigInteger mod, BigInteger exp) throws IOException {
-		    
-		//this output will prolly go away, its for debuging   
-		System.out.println("Write to " + fileName + ": modulus = " + 
-			mod.toString() + ", exponent = " + exp.toString() + "\n");
-
+		System.out.println();
+		System.out.println("Write to " + fileName + ": " + 
+				 "\n---------------------------------\n" +
+		         "modulus = " + mod.toString() + ",\nexponent = " 
+				 + exp.toString() + "\n");
 		ObjectOutputStream oout = new ObjectOutputStream(
 			new BufferedOutputStream(new FileOutputStream(fileName)));
 		try {
 			oout.writeObject(mod);
-		      	oout.writeObject(exp);
+		  	oout.writeObject(exp);
 		} catch (Exception e) {
 		      	throw new IOException("Unexpected error", e);
 		} finally {
@@ -81,16 +78,12 @@ public class KeyGen
 		}
 	}
 
-	//work in progress since we need to save it as 128-bit UTF-8. Or is it done ?
 	public static void saveToFileKXY(String fileName,
 	        String msg) throws IOException {
-		
-		//this output will prolly go away, its for debuging   
-		System.out.println("Write to " + fileName + ": msg= " + msg + "\n");
-
+		System.out.println("Write to " + fileName + ": "
+				+ "\n---------------------------------\n" + msg + "\n");
 		ObjectOutputStream oout = new ObjectOutputStream(
 			new BufferedOutputStream(new FileOutputStream(fileName)));
-
 		try {
 			oout.writeObject(msg);
 		} catch (Exception e) {
